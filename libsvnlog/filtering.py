@@ -9,11 +9,12 @@ def filterByAuthors(xentries, authors):
         if author in authors:
             yield logEntry
 
-def filterByTicket(xentries, ticket):
-    start_text = "#%d " % ticket
+def filterByMessage(xentries, messageRegex):
+    import re
+    pattern = re.compile(messageRegex)
     for entry in xentries:
         msg = domSupport.getChildText(entry, "msg")
-        if msg.lstrip().startswith(start_text):
+        if pattern.search(msg) is not None:
             yield entry
 
 def filterByDate(xentries, date):
@@ -36,7 +37,7 @@ def filterByLimit(xentries, limit):
 
 FILTERS = (
         ("authors", filterByAuthors),
-        ("ticket", filterByTicket),
+        ("message", filterByMessage),
         ("date", filterByDate),
         ("limit", filterByLimit),
         )

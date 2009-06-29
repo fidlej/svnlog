@@ -44,7 +44,7 @@ def getSvnLogFile(options, extra_args):
     args += extra_args
 
     popen = subprocess.Popen(args=args, stdout=subprocess.PIPE,
-            shell=False)
+            shell=False, close_fds=True)
     return popen.stdout, popen.pid
 
 def generateLogEntries(svnLogFile):

@@ -1,0 +1,4 @@
+#!/bin/sh
+prog=`readlink -f -- "$0"`
+dir=`dirname "$prog"`
+exec "$dir"/main.py -v "$@" | less

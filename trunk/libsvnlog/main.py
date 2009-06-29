@@ -20,8 +20,8 @@ def parseArgs():
     parser = optparse.OptionParser(usage=__doc__)
     parser.add_option("-l", "--limit", type="int",
             help="limit the number of log entries")
-    parser.add_option("-t", "--ticket", type="int",
-            help="filter by a ticket number")
+    parser.add_option("-m", "--message",
+            help="filter by regex for a message")
     parser.add_option("-a", "--authors",
             help="filter by authors")
     parser.add_option("-D", "--date",

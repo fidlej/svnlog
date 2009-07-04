@@ -1,6 +1,7 @@
 
 import time
 import domSupport
+import logging
 
 def filterByAuthors(xentries, authors):
     authors = set(authors)
@@ -21,9 +22,16 @@ def filterByDate(xentries, date):
     """Keeps just entries with the given date.
     It is more robust then the -r {date}:{date+1}.
     """
-    if date == "today":
-        date = time.strftime("%Y-%m-%d", time.localtime())
+    try:
+        offset_days = int(date)
+    except ValueError:
+        pass
+    else:
+        offset_seconds = offset_days * 3600 * 24
+        date = time.strftime("%Y-%m-%d",
+                time.localtime(time.time() + offset_seconds))
 
+    logging.debug("Filtering by date: %s", date)
     for entry in xentries:
         loggedDate = domSupport.getChildText(entry, "date")
         if loggedDate.startswith(date):

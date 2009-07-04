@@ -25,7 +25,7 @@ def parseArgs():
     parser.add_option("-a", "--authors",
             help="filter by authors")
     parser.add_option("-D", "--date",
-            help="filter by date (YYYY-MM-DD or 'today')")
+            help="filter by date (YYYY-MM-DD or 0,-1,... days)")
     parser.add_option("-v", "--verbose", action="count",
             help="increase the verboseness")
     parser.add_option("--pr", action="store_true",

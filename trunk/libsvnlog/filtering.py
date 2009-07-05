@@ -22,6 +22,13 @@ def filterByDate(xentries, date):
     """Keeps just entries with the given date.
     It is more robust then the -r {date}:{date+1}.
     """
+    mode = "startswith"
+    op = unicode.startswith
+    if date and date[0] in "><":
+        mode = date[0]
+        date = date[1:]
+        op = unicode.__gt__ if mode == ">" else unicode.__lt__
+
     try:
         offset_days = int(date)
     except ValueError:
@@ -31,12 +38,12 @@ def filterByDate(xentries, date):
         date = time.strftime("%Y-%m-%d",
                 time.localtime(time.time() + offset_seconds))
 
-    logging.debug("Filtering by date: %s", date)
+    logging.debug("Filtering by date: %s %s", mode, date)
     for entry in xentries:
         loggedDate = domSupport.getChildText(entry, "date")
-        if loggedDate.startswith(date):
+        if op(loggedDate, date):
             yield entry
-        elif loggedDate < date:
+        elif mode != "<" and loggedDate < date:
             return
 
 def filterByLimit(xentries, limit):

@@ -51,9 +51,9 @@ def filterByLimit(xentries, limit):
     return itertools.islice(xentries, limit)
 
 FILTERS = (
+        ("date", filterByDate),
         ("authors", filterByAuthors),
         ("message", filterByMessage),
-        ("date", filterByDate),
         ("limit", filterByLimit),
         )
 

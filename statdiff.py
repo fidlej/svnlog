@@ -15,7 +15,13 @@ def _parse_args():
     parser = optparse.OptionParser()
     parser.add_option("-v", "--verbose", action="count", dest="verbosity",
             help="increase verbosity")
-    parser.set_defaults(verbosity=0)
+    parser.add_option("--ignore-owner", action="append_const", dest="ignores",
+            const="st_uid", help="ignore the owner")
+    parser.add_option("--ignore-group", action="append_const", dest="ignores",
+            const="st_gid", help="ignore the group")
+    parser.add_option("--ignore-perms", action="append_const", dest="ignores",
+            const="st_mode", help="ignore the permissions")
+    parser.set_defaults(verbosity=0, ignores=[])
 
     options, args = parser.parse_args()
     if len(args) != 2:
@@ -32,6 +38,13 @@ class Comparator(object):
             "st_size"
             )
 
+    def __init__(self, ignores=()):
+        self.compared_stats = [s for s in self.COMPARED_STATS
+                if s not in ignores]
+
+    def get_compared_stats(self):
+        return self.compared_stats
+
     def xchanges(self, old, new):
         """Generates the changes as (flag, old_path, new_path) pairs.
         The flag could be A, D or M_...
@@ -39,7 +52,7 @@ class Comparator(object):
         """
         old_stat = os.lstat(old)
         new_stat = os.lstat(new)
-        if not _equal_stat(old_stat, new_stat, self.COMPARED_STATS):
+        if not _equal_stat(old_stat, new_stat, self.compared_stats):
             yield ("M_stat", old, new)
             return
 
@@ -75,9 +88,8 @@ class Comparator(object):
                 yield change
 
 def _equal_stat(old_stat, new_stat, compared_stats):
-    for member in compared_stats:
-        old_value = getattr(old_stat, member, None)
-        new_value = getattr(new_stat, member, None)
+    xstats = _xstats(old_stat, new_stat, compared_stats)
+    for name, old_value, new_value in xstats:
         if old_value != new_value:
             return False
     return True
@@ -122,6 +134,18 @@ def _diff_stat(old, new, compared_stats):
     old_stat = os.lstat(old)
     new_stat = os.lstat(new)
     output = ""
+    xstats = _xstats(old_stat, new_stat, compared_stats)
+    for name, old_value, new_value in xstats:
+        if old_value != new_value:
+            output += " %s: %r != %r\n" % (name, old_value, new_value)
+    return output
+
+def _diff_link(old, new):
+    return " link: %s != %s\n" % (os.readlink(old), os.readlink(new))
+
+def _xstats(old_stat, new_stat, compared_stats):
+    """Generates (name, old_value, new_value) for each meaningful stat value.
+    """
     for member in compared_stats:
         if member == "st_size" and stat.S_ISDIR(old_stat.st_mode):
             continue
@@ -130,22 +154,18 @@ def _diff_stat(old, new, compared_stats):
 
         old_value = getattr(old_stat, member, None)
         new_value = getattr(new_stat, member, None)
-        if old_value != new_value:
-            output += " %s: %r != %r\n" % (member, old_value, new_value)
-    return output
-
-def _diff_link(old, new):
-    return " link: %s != %s\n" % (os.readlink(old), os.readlink(new))
+        yield member, old_value, new_value
 
 
 def main():
     options, args = _parse_args()
     old, new = args
     returncode = 0
-    comparator = Comparator()
+    comparator = Comparator(options.ignores)
     for change in comparator.xchanges(old, new):
         returncode = 1
-        _format_change(change, comparator.COMPARED_STATS, options.verbosity)
+        _format_change(change, comparator.get_compared_stats(),
+                options.verbosity)
 
     sys.exit(returncode)
 

@@ -12,7 +12,7 @@ import stat
 import sys
 
 def _parse_args():
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(__doc__)
     parser.add_option("-v", "--verbose", action="count", dest="verbosity",
             help="increase verbosity")
     parser.add_option("--ignore-owner", action="append_const", dest="ignores",

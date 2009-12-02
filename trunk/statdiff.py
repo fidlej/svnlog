@@ -29,12 +29,18 @@ def _parse_args():
 
     return options, args
 
+def _is_special(st_mode):
+    """Returns whether the given stat mode is for a special file.
+    """
+    return (stat.S_ISSOCK(st_mode) or stat.S_ISFIFO(st_mode)
+        or stat.S_ISCHR(st_mode) or stat.S_ISBLK(st_mode))
+
+
 class Comparator(object):
     COMPARED_STATS = (
             "st_mode",
             "st_uid",
             "st_gid",
-            "st_rdev",
             "st_size"
             )
 
@@ -52,7 +58,13 @@ class Comparator(object):
         """
         old_stat = os.lstat(old)
         new_stat = os.lstat(new)
-        if not _equal_stat(old_stat, new_stat, self.compared_stats):
+        if _is_special(old_stat.st_mode):
+            compared_stats = self.compared_stats[:]
+            compared_stats.append("st_rdev")
+        else:
+            compared_stats = self.compared_stats
+
+        if not _equal_stat(old_stat, new_stat, compared_stats):
             yield ("M_stat", old, new)
             return
 
